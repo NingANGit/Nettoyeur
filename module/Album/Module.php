@@ -11,6 +11,13 @@ namespace Album;
 
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\Mvc\ModuleRouteListener;
+// Rajouter après
+use Zend\Db\ResultSet\ResultSet;
+use Album\Model\Album;
+use Album\Model\AlbumTable;
+use Zend\Db\TableGateway\TableGateway;
+
+
 
 class Module implements AutoloaderProviderInterface
 {
@@ -34,12 +41,30 @@ class Module implements AutoloaderProviderInterface
         return include __DIR__ . '/config/module.config.php';
     }
 
-    public function onBootstrap($e)
+//     public function onBootstrap($e)
+//     {
+//         // You may not need to do this if you're doing it elsewhere in your
+//         // application
+//         $eventManager        = $e->getApplication()->getEventManager();
+//         $moduleRouteListener = new ModuleRouteListener();
+//         $moduleRouteListener->attach($eventManager);
+//     }
+    public function getServiceConfig()
     {
-        // You may not need to do this if you're doing it elsewhere in your
-        // application
-        $eventManager        = $e->getApplication()->getEventManager();
-        $moduleRouteListener = new ModuleRouteListener();
-        $moduleRouteListener->attach($eventManager);
+    	return array(
+    			'factories' => array(
+    					'Album\Model\AlbumTable' =>  function($sm) {
+    						$tableGateway = $sm->get('AlbumTableGateway');
+    						$table = new AlbumTable($tableGateway);
+    						return $table;
+    					},
+    					'AlbumTableGateway' => function ($sm) {
+    						$dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
+    						$resultSetPrototype = new ResultSet();
+    						$resultSetPrototype->setArrayObjectPrototype(new Album());
+    						return new TableGateway('album', $dbAdapter, null, $resultSetPrototype);
+    					},
+    			),
+    	);
     }
 }
